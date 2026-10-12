@@ -1,0 +1,236 @@
+// Name: Divyansh Tyagi
+// Btech Cse, 3rd year
+// Sec: ”B”
+// cu24250145
+// Roll no: 21
+// Experiment No. 9 Experiment Name : Object Detection and Recognition using Deep Learning Models on Standard Image Datasets
+// Aim
+// To implement a deep learning-based object detection and recognition system using pre-trained models and evaluate its performance on
+// standard image datasets for identifying and localizing multiple objects.
+// !pip install -q ultralytics opencv-python matplotlib
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.7/46.7 kB 1.2 MB/s eta 0:00:00
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 17.7 MB/s eta 0:00:00
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 53.2/53.2 kB 2.0 MB/s eta 0:00:00
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 90.0/90.0 kB 2.9 MB/s eta 0:00:00
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import time
+from ultralytics import YOLO
+from google.colab import files
+from collections import Counter
+print("Libraries imported successfully!")
+Creating new Ultralytics Settings v0.0.8 file ✅
+View Ultralytics Settings with 'yolo settings' or at '/root/.config/Ultralytics/settings.json'
+Update Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/usage/setting
+Libraries imported successfully!
+# Upload an image from your computer
+# Upload an image from your computer
+uploaded = files.upload()
+# Get the uploaded image filename
+image_path = list(uploaded.keys())[0]
+print("Image uploaded successfully!")
+print("File name:", image_path)
+Choose files images.jpeg
+images.jpeg(image/jpeg) - 27298 bytes, last modified: 24/09/2026 - 100% done
+Saving images.jpeg to images.jpeg
+Image uploaded successfully!
+File name: images.jpeg
+# Read the uploaded image
+image = cv2.imread(image_path)
+# Check whether image was loaded
+if image is None:
+print("Error: Image could not be loaded.")
+else:
+# Convert BGR to RGB
+image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+# Display image
+plt.figure(figsize=(10, 7))
+plt.imshow(image_rgb)
+plt.axis("off")
+plt.title("Original Image")
+plt.show()
+# Load pre-trained YOLOv8 model
+model = YOLO("yolov8n.pt")
+print("YOLOv8 model loaded successfully!")
+Downloading https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n.pt to 'yolov8n.pt': 100% ━━━━━━━━━━━━ 6.2MB 78.0MB/s 0.1s
+YOLOv8 model loaded successfully!
+# Perform object detection
+start_time = time.time()
+results = model(image_path)
+end_time = time.time()
+inference_time = end_time - start_time
+print("Object detection completed!")
+print(f"Inference Time: {inference_time:.4f} seconds")
+image 1/1 /content/images.jpeg: 640x512 1 person, 474.6ms
+Speed: 35.1ms preprocess, 474.6ms inference, 37.6ms postprocess per image at shape (1, 3, 640, 512)
+Object detection completed!
+Inference Time: 8.2429 seconds
+# Get the image with bounding boxes
+annotated_image = results[0].plot()
+# Convert BGR to RGB
+annotated_image_rgb = cv2.cvtColor(
+annotated_image,
+cv2.COLOR_BGR2RGB
+)
+# Display result
+plt.figure(figsize=(12, 8))
+plt.imshow(annotated_image_rgb)
+plt.axis("off")
+plt.title("YOLOv8 Object Detection Results")
+plt.show()
+# Get detected bounding boxes
+boxes = results[0].boxes
+print("Detected Objects")
+print("=" * 40)
+if len(boxes) == 0:
+print("No objects detected.")
+else:
+for box in boxes:
+# Class ID
+class_id = int(box.cls[0])
+# Confidence score
+confidence = float(box.conf[0])
+# Class name
+class_name = model.names[class_id]
+print(f"Object : {class_name}")
+print(f"Confidence : {confidence:.2f}")
+print("-" * 40)
+Detected Objects
+========================================
+Object : person
+Confidence : 0.89
+----------------------------------------
+print("Bounding Box Information")
+print("=" * 50)
+for box in boxes:
+class_id = int(box.cls[0])
+confidence = float(box.conf[0])
+class_name = model.names[class_id]
+# Get coordinates
+x1, y1, x2, y2 = box.xyxy[0].tolist()
+print(f"Object : {class_name}")
+print(f"Confidence : {confidence:.2f}")
+print(f"Coordinates : ({x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f})")
+print("-" * 50)
+Bounding Box Information
+==================================================
+Object : person
+Confidence : 0.89
+Coordinates : (9, 12, 424, 563)
+--------------------------------------------------
+# Store detected class names
+detected_objects = []
+for box in boxes:
+class_id = int(box.cls[0])
+class_name = model.names[class_id]
+detected_objects.append(class_name)
+# Count objects
+object_counts = Counter(detected_objects)
+print("Object Count")
+print("=" * 30)
+for object_name, count in object_counts.items():
+print(f"{object_name}: {count}")
+Object Count
+==============================
+person: 1
+# Set confidence threshold
+confidence_threshold = 0.50
+print(f"Objects with confidence >= {confidence_threshold}")
+print("=" * 45)
+for box in boxes:
+confidence = float(box.conf[0])
+if confidence >= confidence_threshold:
+class_id = int(box.cls[0])
+class_name = model.names[class_id]
+print(
+f"{class_name} "
+f"--> Confidence: {confidence:.2f}"
+)
+Objects with confidence >= 0.5
+=============================================
+person --> Confidence: 0.89
+# Save the detection result
+output_filename = "object_detection_result.jpg"
+cv2.imwrite(
+output_filename,
+annotated_image
+)
+print("Detection result saved successfully!")
+print("File:", output_filename)
+Detection result saved successfully!
+File: object_detection_result.jpg
+# Download the output image
+files.download(output_filename)
+print("\n")
+print("=" * 50)
+print("OBJECT DETECTION SUMMARY")
+print("=" * 50)
+print(f"Model Used : YOLOv8n")
+print(f"Dataset : COCO")
+print(f"Total Objects : {len(boxes)}")
+print(f"Inference Time : {inference_time:.4f} seconds")
+print("\nDetected Objects:")
+if len(object_counts) == 0:
+print("No objects detected.")
+else:
+for object_name, count in object_counts.items():
+print(f" {object_name}: {count}")
+print("=" * 50)
+==================================================
+OBJECT DETECTION SUMMARY
+==================================================
+Model Used : YOLOv8n
+Dataset : COCO
+Total Objects : 1
+Inference Time : 8.2429 seconds
+Detected Objects:
+person: 1
+==================================================
+// VIVA / ASSIGNMENT QUESTIONS — ANSWERS
+// Q1. Differentiate between image classification, object detection, and image segmentation.
+// Answer: Image classification assigns a class or category to the complete image. Object detection identifies one or more objects in an
+// image and locates them using bounding boxes along with class labels. Image segmentation goes one step further by classifying individual
+// pixels of an image to identify the exact region or shape of objects. Thus, classification tells what is present, detection tells what and
+// where, while segmentation tells what and which pixels belong to it.
+// Q2. Explain the working principle of the YOLO (You Only Look Once) object detection algorithm.
+// Answer: YOLO stands for You Only Look Once. It is a deep learning-based object detection algorithm that processes the complete
+// image in a single pass through a neural network. The model predicts the locations of objects, their class labels, and confidence scores.
+// Since the image is processed in one pass, YOLO provides fast object detection and is suitable for real-time applications such as
+// surveillance and autonomous systems. The experiment specifically includes YOLOv8 as one of the pre-trained models that can be used for
+// object detection.
+// Q3. Compare YOLO, SSD, and Faster R-CNN based on speed, accuracy, and practical applications.
+// Answer: YOLO, SSD, and Faster R-CNN are deep learning-based object detection models, but they differ in speed and accuracy.
+// YOLO: It is designed for fast object detection and is suitable for real-time applications.
+// SSD (Single Shot Detector): It is also a single-stage detector that provides a good balance between detection speed and accuracy.
+// Faster R-CNN: It generally focuses more on detection accuracy but can be slower compared with single-stage detectors.
+// YOLO and SSD are commonly suitable for real-time applications, while Faster R-CNN can be used when detailed and accurate detection is
+// more important. The experiment asks for comparison based on detection accuracy and inference speed when multiple models are used.
+// Q4. What is a bounding box? Why is it important in object detection?
+// Answer: A bounding box is a rectangular box drawn around a detected object in an image. It represents the location of the object using
+// coordinates such as the top-left and bottom-right points. Bounding boxes are important because they allow the system to identify not
+// only what object is present, but also where the object is located in the image. Object detection systems use bounding boxes together
+// with class labels to localize objects.
+// Q5. Explain the significance of confidence score and Intersection over Union (IoU) in object detection.
+// Answer: A confidence score represents the model's confidence in its prediction that a detected region contains a particular object. A
+// higher confidence score generally indicates a stronger prediction.
+// Intersection over Union (IoU) measures the amount of overlap between the predicted bounding box and the actual ground-truth
+// bounding box. It is used to evaluate how accurately an object has been localized. Therefore, confidence score helps evaluate the certainty
+// of a prediction, while IoU helps evaluate the accuracy of the predicted object's location.
+// Q6. What are the advantages of using pre-trained deep learning models over traditional image processing techniques?
+// Answer: Pre-trained deep learning models have already learned useful visual features from large standard datasets. They can therefore
+// be used for object detection without training a complete model from the beginning. They can reduce development and training time and
+// can detect complex objects more effectively than many traditional hand-crafted image processing techniques. Models such as YOLOv8,
+// SSD, and Faster R-CNN can be used as pre-trained object detection models.
+// Q7. Why are datasets such as MS COCO and Pascal VOC widely used for object detection research?
+// Answer: MS COCO and Pascal VOC are standard datasets containing images and object annotations used for computer vision research.
+// They provide suitable data for training and evaluating object detection systems. These datasets contain multiple object categories and
+// provide information required for object localization and recognition. Therefore, they are widely used as standard datasets and
+// benchmarks for object detection research.
+// Q8. Mention five real-world applications of object detection in computer vision.
+Answer: Five real-world applications of object detection are:
+1. Autonomous vehicles – detecting vehicles, pedestrians, traffic signs, and other objects.
+2. Surveillance systems – detecting and monitoring objects or people in security environments.
+3. Healthcare – assisting in the detection and localization of relevant objects in medical images.
+4. Smart cities – monitoring traffic and objects in urban environments.
+5. Retail analytics – detecting products and analyzing objects in retail environments.
